@@ -76,39 +76,54 @@
     </div>
 
     <script>
-        // Инициализируем Телеграм
-        let tg = window.Telegram.WebApp;
-        tg.expand(); // Раскрыть на весь экран
+// Инициализируем Телеграм
+    let tg = window.Telegram.WebApp;
+    tg.expand(); // Раскрыть на весь экран
 
-        let selectedSize = null;
+    let selectedSize = null;
 
-        // Функция выбора размера
-        function selectSize(element, size) {
-            // Убираем выделение со всех кнопок
-            document.querySelectorAll('.size-btn').forEach(btn => btn.classList.remove('selected'));
-            // Добавляем выделение нажатой кнопке
-            element.classList.add('selected');
-            selectedSize = size;
+    // Функция выбора размера
+    function selectSize(element, size) {
+        // Убираем выделение со всех кнопок
+        document.querySelectorAll('.size-btn').forEach(btn => btn.classList.remove('selected'));
+        // Добавляем выделение нажатой кнопке
+        element.classList.add('selected');
+        selectedSize = size;
+    }
+
+    // Функция отправки заказа
+    function sendOrder() {
+        let btn = document.getElementById('buy-btn');
+
+        // 1. Проверка размера
+        if (!selectedSize) {
+            // Используем обычный alert, он работает везде
+            alert("⚠️ Сначала выберите размер (S, M или L)!"); 
+            return;
         }
 
-        // Функция отправки заказа
-        function sendOrder() {
-            if (!selectedSize) {
-                tg.showAlert("Пожалуйста, выберите размер!");
-                return;
-            }
+        // 2. Визуальный эффект (чтобы понять, что клик прошел)
+        btn.innerText = "⏳ Отправляю...";
+        btn.style.background = "#f1c40f"; // Желтый цвет
 
-            // Формируем данные для отправки боту
-            let data = {
-                product: "Крутая Футболка",
-                price: 1500,
-                size: selectedSize
-            };
+        // 3. Формируем данные
+        let data = {
+            product: "Крутая Футболка",
+            price: 1500,
+            size: selectedSize
+        };
 
-            // Отправляем данные в Телеграм
-            tg.sendData(JSON.stringify(data));
+        // 4. Пытаемся отправить данные боту
+        try {
+            tg.sendData(JSON.stringify(data)); 
+            // Внимание: После этой команды окно Телеграма должно закрыться само!
+        } catch (e) {
+            alert("Ошибка отправки: " + e);
+            btn.innerText = "Купить"; // Возвращаем текст
+            btn.style.background = "#3498db"; // Возвращаем синий цвет
         }
-    </script>
+    }
+        </script>
 
 </body>
 </html>
