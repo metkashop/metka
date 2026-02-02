@@ -10,131 +10,175 @@
             font-family: -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--tg-theme-bg-color, #f5f5f5);
             color: var(--tg-theme-text-color, #000);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            padding: 15px;
+            margin: 0;
+        }
+
+        /* Сетка товаров: 2 колонки */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
         }
 
         .product-card {
             background: var(--tg-theme-secondary-bg-color, #ffffff);
-            padding: 20px;
-            border-radius: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            width: 100%;
-            max-width: 350px;
+            padding: 10px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
             text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
 
         img {
             width: 100%;
-            border-radius: 15px;
-            margin-bottom: 15px;
+            border-radius: 10px;
+            aspect-ratio: 1/1; /* Делает фото квадратными */
+            object-fit: cover;
+            margin-bottom: 10px;
         }
 
-        .price { font-size: 28px; color: #2ecc71; font-weight: 800; margin: 10px 0; }
+        .name { font-size: 14px; margin: 5px 0; font-weight: 600; line-height: 1.2;}
+        .price { font-size: 16px; color: #2ecc71; font-weight: 800; margin-bottom: 10px; }
 
-        .sizes { display: flex; justify-content: center; gap: 10px; margin-bottom: 25px; }
-        
-        /* ВАЖНО: Теперь это настоящие кнопки */
-        .size-btn {
-            width: 50px;
-            height: 50px;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            font-weight: bold;
-            font-size: 16px;
-            cursor: pointer;
-            background: #fff;
-            color: #000;
-            /* Убираем стандартные стили браузера */
-            appearance: none; 
-            -webkit-appearance: none;
-        }
-
-        .size-btn.selected {
-            background-color: #3498db;
-            color: white;
-            border-color: #3498db;
-            transform: scale(1.1);
-        }
-
-        #buy-btn {
+        .btn {
             background-color: #3498db;
             color: white;
             border: none;
-            padding: 18px;
-            font-size: 18px;
-            border-radius: 15px;
+            padding: 10px;
+            font-size: 14px;
+            border-radius: 8px;
             cursor: pointer;
             width: 100%;
             font-weight: bold;
         }
+        .btn:active { opacity: 0.8; }
+
+        /* Всплывающее окно выбора размера */
+        #modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        .modal-content {
+            background: var(--tg-theme-bg-color, #fff);
+            padding: 20px;
+            border-radius: 20px;
+            width: 80%;
+            max-width: 300px;
+            text-align: center;
+        }
+        .sizes-row { display: flex; justify-content: center; gap: 10px; margin: 20px 0; }
+        .size-btn {
+            width: 45px; height: 45px;
+            border: 2px solid #ddd; border-radius: 10px;
+            background: none; color: var(--tg-theme-text-color, #000);
+            font-weight: bold;
+        }
+        .size-btn.selected { background: #3498db; color: white; border-color: #3498db; }
+        
+        .close-btn { margin-top: 10px; background: none; border: none; color: #888; text-decoration: underline; }
+
     </style>
 </head>
 <body>
 
-    <div class="product-card">
-        <img src="https://via.placeholder.com/400x400?text=T-Shirt" alt="Футболка">
-        <h2>Фирменная Футболка</h2>
-        <div class="price">1500 ₽</div>
+    <div class="product-grid" id="container"></div>
 
-        <p style="font-size: 14px; color: #888;">Выберите размер:</p>
-        
-        <div class="sizes">
-            <button class="size-btn" type="button" onclick="selectSize(this, 'S')">S</button>
-            <button class="size-btn" type="button" onclick="selectSize(this, 'M')">M</button>
-            <button class="size-btn" type="button" onclick="selectSize(this, 'L')">L</button>
-            <button class="size-btn" type="button" onclick="selectSize(this, 'XL')">XL</button>
+    <div id="modal">
+        <div class="modal-content">
+            <h3 id="modal-title">Товар</h3>
+            <p>Выберите размер:</p>
+            <div class="sizes-row">
+                <button class="size-btn" onclick="selectSize(this, 'S')">S</button>
+                <button class="size-btn" onclick="selectSize(this, 'M')">M</button>
+                <button class="size-btn" onclick="selectSize(this, 'L')">L</button>
+            </div>
+            <button class="btn" onclick="confirmOrder()">ПОДТВЕРДИТЬ</button>
+            <button class="close-btn" onclick="closeModal()">Отмена</button>
         </div>
-
-        <button id="buy-btn" onclick="sendOrder()">Купить за 1500 ₽</button>
     </div>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
 
+        // ==========================================
+        // 🛠 ТВОИ ТОВАРЫ (МОЖЕШЬ МЕНЯТЬ ЭТОТ СПИСОК)
+        // ==========================================
+        const products = [
+            { id: 1, name: "Белая Футболка Basic", price: 1200, img: "https://via.placeholder.com/300?text=White" },
+            { id: 2, name: "Черная Футболка Pro", price: 1500, img: "https://via.placeholder.com/300?text=Black" },
+            { id: 3, name: "Худи Oversize", price: 3500, img: "https://via.placeholder.com/300?text=Hoodie" },
+            { id: 4, name: "Свитшот Grey", price: 2800, img: "https://via.placeholder.com/300?text=Sweatshirt" },
+            { id: 5, name: "Кепка Logo", price: 900, img: "https://via.placeholder.com/300?text=Cap" },
+            { id: 6, name: "Шоппер", price: 500, img: "https://via.placeholder.com/300?text=Bag" }
+        ];
+        // ==========================================
+
+        let currentProduct = null;
         let selectedSize = null;
 
+        // Генерация карточек при загрузке
+        const container = document.getElementById('container');
+        products.forEach(item => {
+            let card = document.createElement('div');
+            card.className = 'product-card';
+            card.innerHTML = `
+                <img src="${item.img}" alt="${item.name}">
+                <div class="name">${item.name}</div>
+                <div class="price">${item.price} ₽</div>
+                <button class="btn" onclick="openModal(${item.id})">В корзину</button>
+            `;
+            container.appendChild(card);
+        });
+
+        // Открытие окна выбора размера
+        function openModal(id) {
+            currentProduct = products.find(p => p.id === id);
+            document.getElementById('modal-title').innerText = currentProduct.name;
+            document.getElementById('modal').style.display = 'flex';
+            
+            // Сброс размера
+            selectedSize = null;
+            document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected'));
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
         function selectSize(btn, size) {
-            // 1. Визуально убираем выделение со всех кнопок
-            document.querySelectorAll('.size-btn').forEach(b => {
-                b.classList.remove('selected');
-                b.style.backgroundColor = '#fff'; // Принудительно возвращаем белый
-                b.style.color = '#000';
-            });
-            
-            // 2. Выделяем нажатую
+            document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
-            btn.style.backgroundColor = '#3498db'; // Принудительно красим в синий
-            btn.style.color = '#fff';
-            
-            // 3. Запоминаем размер
             selectedSize = size;
         }
 
-        function sendOrder() {
+        function confirmOrder() {
             if (!selectedSize) {
-                tg.showAlert("⚠️ Выберите размер!");
+                tg.showAlert("⚠️ Сначала выберите размер!");
                 return;
             }
 
-            let btn = document.getElementById('buy-btn');
-            btn.innerText = "⏳ Оформляем...";
-            btn.style.background = "#f1c40f";
-
+            // Данные для отправки боту
             let data = {
-                product: "Фирменная Футболка",
-                price: 1500,
-                size: selectedSize
+                product: currentProduct.name,
+                price: currentProduct.price,
+                size: selectedSize,
+                id: currentProduct.id
             };
 
-            setTimeout(() => {
-                tg.sendData(JSON.stringify(data));
-            }, 300);
+            tg.sendData(JSON.stringify(data));
         }
     </script>
-
 </body>
 </html>
