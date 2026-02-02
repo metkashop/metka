@@ -3,55 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Магазин Футболок</title>
+    <title>Магазин</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-            color: #333;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--tg-theme-bg-color, #f0f0f0);
+            color: var(--tg-theme-text-color, #333);
             padding: 20px;
             text-align: center;
         }
         .product-card {
-            background: white;
+            background: var(--tg-theme-secondary-bg-color, white);
             padding: 20px;
             border-radius: 15px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             max-width: 300px;
             margin: 0 auto;
         }
-        img { width: 100%; border-radius: 10px; }
-        h2 { margin: 10px 0; }
-        .price { font-size: 1.2em; color: #2ecc71; font-weight: bold; }
+        img { width: 100%; border-radius: 10px; margin-bottom: 15px; }
+        h2 { margin: 5px 0; font-size: 20px;}
+        .price { font-size: 1.4em; color: #2ecc71; font-weight: bold; margin: 10px 0; }
         
-        .sizes { margin: 15px 0; }
+        .sizes { margin-top: 20px; display: flex; justify-content: center; gap: 10px; }
         .size-btn {
-            padding: 10px 20px;
-            border: 2px solid #ddd; /* Сделал рамку потолще */
-            background: white;
+            padding: 12px 20px;
+            border: 1px solid #ddd;
+            background: var(--tg-theme-button-color, #eee);
+            color: var(--tg-theme-button-text-color, #333);
             cursor: pointer;
             border-radius: 8px;
-            margin: 0 5px;
             font-size: 16px;
-        }
-        .size-btn.selected {
-            background-color: #3498db;
-            color: white;
-            border-color: #3498db;
-        }
-
-        #buy-btn {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            font-size: 18px;
-            border-radius: 10px;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 15px;
             font-weight: bold;
+            transition: all 0.2s;
+        }
+        /* Стиль выбранной кнопки */
+        .size-btn.selected {
+            background-color: #3498db; /* Синий, если тема не подцепилась */
+            background-color: var(--tg-theme-button-color, #3498db); 
+            color: white;
+            color: var(--tg-theme-button-text-color, white);
+            border: 2px solid #2980b9;
+            transform: scale(1.05);
         }
     </style>
 </head>
@@ -61,58 +54,51 @@
         <img src="https://via.placeholder.com/300x300?text=T-Shirt" alt="Футболка">
         <h2>Крутая Футболка</h2>
         <p class="price">1500 руб.</p>
+        <p style="font-size: 14px; color: #777;">Выберите размер, чтобы появилась кнопка покупки</p>
 
         <div class="sizes">
-            <span>Выберите размер:</span><br><br>
-            <button class="size-btn" onclick="selectSize(this, 'S')">S</button>
-            <button class="size-btn" onclick="selectSize(this, 'M')">M</button>
-            <button class="size-btn" onclick="selectSize(this, 'L')">L</button>
+            <div class="size-btn" onclick="selectSize(this, 'S')">S</div>
+            <div class="size-btn" onclick="selectSize(this, 'M')">M</div>
+            <div class="size-btn" onclick="selectSize(this, 'L')">L</div>
         </div>
-
-        <button id="buy-btn" onclick="sendOrder()">Купить</button>
     </div>
 
     <script>
-        // Проверка 1: Загрузился ли скрипт вообще?
-        // alert("DEBUG: Сайт загружен! Если видишь это, JS работает.");
-
         let tg = window.Telegram.WebApp;
-        tg.expand(); 
+        tg.expand(); // На весь экран
+
+        // Настраиваем Главную Кнопку (MainButton)
+        tg.MainButton.textColor = '#FFFFFF';
+        tg.MainButton.color = '#2ecc71'; // Зеленый цвет
 
         let selectedSize = null;
 
         function selectSize(element, size) {
+            // 1. Визуальное выделение
             document.querySelectorAll('.size-btn').forEach(btn => btn.classList.remove('selected'));
             element.classList.add('selected');
+            
+            // 2. Запоминаем размер
             selectedSize = size;
+
+            // 3. ПОКАЗЫВАЕМ нативную кнопку Телеграма
+            tg.MainButton.setText(`КУПИТЬ (Размер ${size})`);
+            tg.MainButton.show();
         }
 
-        function sendOrder() {
-            // Проверка 2: Реагирует ли кнопка на нажатие?
-            // alert("DEBUG: Кнопка нажата! Размер: " + selectedSize);
-
-            if (!selectedSize) {
-                tg.showAlert("⚠️ Сначала выберите размер!"); 
-                return;
-            }
-
-            let btn = document.getElementById('buy-btn');
-            btn.innerText = "⏳ Отправляю...";
-            btn.style.background = "#f1c40f";
-
+        // Обработчик нажатия на Главную Кнопку
+        Telegram.WebApp.onEvent('mainButtonClicked', function(){
+            // Данные для отправки
             let data = {
                 product: "Крутая Футболка",
                 price: 1500,
                 size: selectedSize
             };
 
-            try {
-                // Главное действие: Отправка данных боту
-                tg.sendData(JSON.stringify(data));
-            } catch (e) {
-                alert("Ошибка: " + e);
-            }
-        }
+            // Отправляем данные боту
+            tg.sendData(JSON.stringify(data)); 
+        });
+
     </script>
 
 </body>
