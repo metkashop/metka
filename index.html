@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Магазин Футболок</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0; /* Светло-серый фон */
+            color: #333;
+            padding: 20px;
+            text-align: center;
+        }
+        .product-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px; /* Закругленные углы */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            max-width: 300px;
+            margin: 0 auto; /* По центру */
+        }
+        img {
+            width: 100%;
+            border-radius: 10px;
+        }
+        h2 { margin: 10px 0; }
+        .price { font-size: 1.2em; color: #2ecc71; font-weight: bold; }
+        
+        /* Стили для кнопок размеров */
+        .sizes { margin: 15px 0; }
+        .size-btn {
+            padding: 8px 15px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            border-radius: 5px;
+            margin: 0 5px;
+        }
+        .size-btn.selected {
+            background-color: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+
+        /* Главная кнопка */
+        #buy-btn {
+            background-color: #3498db; /* Синий цвет Телеграма */
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="product-card">
+        <img src="https://via.placeholder.com/300x300?text=T-Shirt" alt="Футболка">
+        <h2>Крутая Футболка</h2>
+        <p class="price">1500 руб.</p>
+
+        <div class="sizes">
+            <span>Размер:</span><br><br>
+            <button class="size-btn" onclick="selectSize(this, 'S')">S</button>
+            <button class="size-btn" onclick="selectSize(this, 'M')">M</button>
+            <button class="size-btn" onclick="selectSize(this, 'L')">L</button>
+        </div>
+
+        <button id="buy-btn" onclick="sendOrder()">Купить</button>
+    </div>
+
+    <script>
+        // Инициализируем Телеграм
+        let tg = window.Telegram.WebApp;
+        tg.expand(); // Раскрыть на весь экран
+
+        let selectedSize = null;
+
+        // Функция выбора размера
+        function selectSize(element, size) {
+            // Убираем выделение со всех кнопок
+            document.querySelectorAll('.size-btn').forEach(btn => btn.classList.remove('selected'));
+            // Добавляем выделение нажатой кнопке
+            element.classList.add('selected');
+            selectedSize = size;
+        }
+
+        // Функция отправки заказа
+        function sendOrder() {
+            if (!selectedSize) {
+                tg.showAlert("Пожалуйста, выберите размер!");
+                return;
+            }
+
+            // Формируем данные для отправки боту
+            let data = {
+                product: "Крутая Футболка",
+                price: 1500,
+                size: selectedSize
+            };
+
+            // Отправляем данные в Телеграм
+            tg.sendData(JSON.stringify(data));
+        }
+    </script>
+
+</body>
+</html>
